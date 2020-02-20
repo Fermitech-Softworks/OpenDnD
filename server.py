@@ -210,9 +210,10 @@ def verify_token(usertoken, uid):
     token = dbs.query(Token).filter_by(token=usertoken, owner_id=user.email).first()
     print(token)
     if token:
-        if token.creation.day == datetime.datetime.now().day and (token.creation.hour - datetime.datetime.now().hour) < 6:
+        if token.creation.day == datetime.datetime.now().day and (
+                token.creation.hour - datetime.datetime.now().hour) < 6:
             return True
-        dbs.remove(token)
+        dbs.delete(token)
         dbs.commit()
     return False
 
@@ -228,9 +229,16 @@ async def api_get_token(request):
     form = await request.form()
     if login(form['email'], form['password']):
         user = locate_player(form['email'])
-        token = Token(user.email)
-        dbs.add(token)
-        dbs.commit()
+        token = dbs.query(Token).filter_by(owner_id=user.email).first()
+        test = False
+        if token:
+            test = verify_token(token.token, user.uid)
+            token.creation = datetime.datetime.now()
+            dbs.commit()
+        if not token or not test:
+            token = Token(user.email)
+            dbs.add(token)
+            dbs.commit()
         return JSONResponse({'result': 'success', 'token': token.token, 'username': user.username, 'uid': user.uid})
     else:
         return JSONResponse({'result': 'failure', 'desc': 'Invalid username or password'})
@@ -254,12 +262,15 @@ async def api_get_campaigns(request):
     if not verify_token(form['token'], form['uid']):
         return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
     campaigns = dbs.query(Campaign).join(User).filter_by(uid=form['uid']).all()
-    response = {'result': 'success', 'campaigns': {}}
+    response = {'result': 'success', 'campaigns': [{'title': None, 'owner': {'uid':None, 'username':None}, 'cid':None}]}
+    a = 0
     for campaign in campaigns:
-        response['campaigns']['title'] = campaign.title
-        response['campaigns']['owner']['uid'] = campaign.owner_id
+        response['campaigns'][a]['title'] = campaign.title
+        response['campaigns'][a]['owner']['uid'] = campaign.owner_id
         owner = locate_player_uid(campaign.owner_id)
-        response['campaigns']['owner']['username'] = owner.username
+        response['campaigns'][a]['owner']['username'] = owner.username
+        response['campaigns'][a]['cid'] = campaign.cid
+        a += 1
     return JSONResponse(response)
 
 
@@ -273,6 +284,7 @@ app = Starlette(debug=True, routes=[
     Route('/api/login', api_get_token, methods=['POST']),
     Route('/api/register', api_create_user, methods=['POST']),
     Route('/api/get_campaigns', api_get_campaigns, methods=['POST']),
-    Mount("/scripts", app=StaticFiles(directory='scripts'), name="scripts")], )
+    Mount("/scripts", app=StaticFiles(directory='scripts'), name="scripts"),
+    Mount("/static", app=StaticFiles(directory='static'), name="static")])
 
 log.info("Rasanahal WebApp ready.")

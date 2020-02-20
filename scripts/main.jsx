@@ -35,9 +35,38 @@ class OpenDnD extends React.Component {
             });
     }
 
+    signup = () => {
+        console.log("Signup");
+        let emailreg = document.getElementById("emailreg").value;
+        let passwordreg = document.getElementById("passwordreg").value;
+        let usernamereg = document.getElementById("usernamereg").value;
+        if (emailreg === "" || passwordreg === "" || usernamereg === "") {
+            document.getElementById("emailreg").value = "One or more fields are empty. Retry.";
+            return;
+        }
+        let data = new FormData();
+        data.append("email", emailreg);
+        data.append("password", passwordreg);
+        data.append("username", usernamereg)
+        fetch("/api/register", {
+            "method": "POST",
+            "body": data
+        })
+            .then(res => res.json())
+            .then((result) => {
+                if (result.result === "failure") {
+                    console.log("Error")
+                    document.getElementById("emailreg").value = result.desc;
+                } else if (result.result === "success") {
+                    console.log("yay")
+                    document.getElementById("register").innerHTML = "";
+                }
+            });
+    }
+
     render() {
         if (this.state.page === 'login') {
-            return <Login loginFunc={this.validate}></Login>
+            return <Login loginFunc={this.validate} signupFunc={this.signup}></Login>
         } else if (this.state.page === 'dashboard') {
             return <Dashboard token={this.state.user.token} uid={this.state.user.uid}></Dashboard>
         }
@@ -54,38 +83,63 @@ class Login extends React.Component {
 
     render() {
         return (
-            <div>
-                <div className="row">
-                    <div className="col-md-6">
-                        <div className="jumbotron">
-                            <h1 className="display-3">OpenDnD</h1>
-                            <p className="lead"></p>
-                            <hr className="my-4"></hr>
-                            <p>Please login to use this website.</p>
-                            <p className="lead"></p>
+            <div className="login-container">
+                <br></br>
+                <div className="container">
+                    <div className="row">
+                        <div className="col-md-6">
+                            <div className="jumbotron trasparent">
+                                <h1 className="display-3">OpenDnD</h1>
+                                <p>Please login to use this website.</p>
+                                <div>
+                                    <div className="form-group">
+                                        <label htmlFor="email" id="usernamelabel">Email</label>
+                                        <input type="email" className="form-control" id="email"
+                                               aria-describedby="emailHelp"
+                                               placeholder="Enter your email" name="email"/>
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="password">Password</label>
+                                        <input type="password" className="form-control" id="password"
+                                               placeholder="Password"
+                                               name="password"/>
+                                    </div>
+                                    <button className="btn btn-primary" onClick={this.props.loginFunc}>Login
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-6 white" id="register">
+                            <h1 className="display-3"></h1>
+                            <p>You don't have an account? Register now!</p>
                             <div>
                                 <div className="form-group">
-                                    <label htmlFor="email" id="usernamelabel">Email</label>
-                                    <input type="email" className="form-control" id="email"
+                                    <label htmlFor="emailreg" id="emailabelreg">Email</label>
+                                    <input type="email" className="form-control" id="emailreg"
                                            aria-describedby="emailHelp"
-                                           placeholder="Enter your email" name="email"/>
+                                           placeholder="Enter your email" name="emailreg"/>
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="password">Password</label>
-                                    <input type="password" className="form-control" id="password"
-                                           placeholder="Password"
-                                           name="password"/>
+                                    <label htmlFor="usernamereg" id="usernamelabelreg">Username</label>
+                                    <input type="text" className="form-control" id="usernamereg"
+                                           aria-describedby="emailHelp"
+                                           placeholder="Enter your username" name="usernamereg"/>
                                 </div>
-                                <button className="btn btn-primary" onClick={this.props.loginFunc}>Login</button>
+                                <div className="form-group">
+                                    <label htmlFor="passwordreg">Password</label>
+                                    <input type="password" className="form-control" id="passwordreg"
+                                           placeholder="Password"
+                                           name="passwordreg"/>
+                                </div>
+                                <button className="btn btn-primary" onClick={this.props.signupFunc}>Sign up
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div className="col-md-6">
-                        <a href="/signup" type="button" className="btn btn-success btn-lg btn-block">Create an
-                            account</a>
+                    <div className="credits">
+                        OpenDnD is a WebApplication developed with passion by Fermitech Softworks.
                     </div>
                 </div>
-                OpenDnD is a WebApplication developed with passion by Fermitech Softworks.
             </div>
         )
     }
@@ -94,10 +148,13 @@ class Login extends React.Component {
 class Dashboard extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {campaigns: [{title: null, owner: {uid: null, username: null}}]};
+        this.state = {campaigns: [{title: null, owner: {uid: null, username: null},cid: null}
+    ]
+    }
+        ;
     }
 
-    componentDidMount() {
+    gatherCampaignData() {
         let data = new FormData();
         data.append("token", this.props.token);
         data.append("uid", this.props.uid);
@@ -110,19 +167,30 @@ class Dashboard extends React.Component {
                 if (result.result === "failure") {
                     console.log(result.desc)
                 } else if (result.result === "success") {
-                    this.setState({campaigns:result.campaigns})
+                    this.setState({campaigns: result.campaigns})
                 }
             });
     }
 
+    componentDidMount() {
+        this.gatherCampaignData()
+    }
+
     render() {
-        let ciao = [];
-        for (let i = 0; i < 10; i++) {
-            ciao.push(i);
-        }
+        let campaigns = this.state.campaigns.map((item) => {
+            return (
+                <div key={item.cid}>{item.title}</div>
+            )
+        })
         return (
-            <div>
-                {ciao}
+            <div className="dashboard-container">
+                <br></br>
+                <div className="container">
+                    <div className="jumbotron trasparent">
+                        {campaigns}
+                    </div>
+                </div>
+
             </div>
         )
     }

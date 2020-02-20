@@ -1,0 +1,33 @@
+{%extends "mold.htm"%}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="jumbotron">
+            <h1 class="display-3">OpenDnD</h1>
+            <p class="lead"></p>
+            <hr class="my-4">
+            <p>Please login to use this website.</p>
+            <p class="lead">
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label for="username" id="usernamelabel">Email</label>
+                    <input type="email" class="form-control" id="username" aria-describedby="emailHelp"
+                           placeholder="Enter your email" name="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Password"
+                           name="password">
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <a href="/signup" type="button" class="btn btn-success btn-lg btn-block">Create an account</a>
+    </div>
+</div>
+<center>OpenDnD is a WebApplication developed with passion by Fermitech Softworks.</center>
+</div>
+{% endblock %}
