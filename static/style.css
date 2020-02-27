@@ -3,7 +3,7 @@ body, html {
 }
 
 .login-container {
-    background-image: url("https://www.elsetge.cat/myimg/f/20-205533_paper-dungeons-hd-wallpaper-hd-d-d-desktop.png");
+    background-image: url("wallpaper.jpg");
     height: 100%;
     background-position: center;
     background-repeat: no-repeat;
@@ -14,6 +14,14 @@ body, html {
     text-align: center;
     color: white;
     text-shadow: black 1px 1px;
+}
+
+.dashboard-container{
+    background-image: url("wallpaper.jpg");
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 .col-md-6.white {

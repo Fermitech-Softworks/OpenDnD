@@ -262,7 +262,8 @@ async def api_get_campaigns(request):
     if not verify_token(form['token'], form['uid']):
         return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
     campaigns = dbs.query(Campaign).join(User).filter_by(uid=form['uid']).all()
-    response = {'result': 'success', 'campaigns': [{'title': None, 'owner': {'uid':None, 'username':None}, 'cid':None}]}
+    response = {'result': 'success',
+                'campaigns': [{'title': None, 'owner': {'uid': None, 'username': None}, 'cid': None}]}
     a = 0
     for campaign in campaigns:
         response['campaigns'][a]['title'] = campaign.title
@@ -272,6 +273,75 @@ async def api_get_campaigns(request):
         response['campaigns'][a]['cid'] = campaign.cid
         a += 1
     return JSONResponse(response)
+
+
+async def api_get_characters(request):
+    form = await request.form()
+    if not verify_token(form['token'], form['uid']):
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+    characters = dbs.query(Character).join(User).filter_by(uid=form['uid']).all()
+    print(len(characters))
+    response = {'result': 'success', 'characters': [{'cid': None, 'name': None, 'race': None, 'level': None}]}
+    a = 0
+    for character in characters:
+        response['characters'][a]['cid'] = character.cid
+        response['characters'][a]['name'] = character.name
+        response['characters'][a]['race'] = character.race
+        response['characters'][a]['level'] = character.level
+        a += 1
+    print(response)
+    return JSONResponse(response)
+
+
+async def api_get_character_details(request):
+    form = await request.form()
+    if not verify_token(form['token'], form['uid']):
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+    character = dbs.query(Character).Join(User).filter_by(cid=form['cid']).first()
+    response = {'result': 'success',
+                'character': {'cid': character.cid, 'isNpc': character.isNpc, 'name': character.name,
+                              'race': character.race, 'level': character.level, 'maxhp': character.maxhp,
+                              'currenthp': character.currenthp, 'proficiency': character.proficiency,
+                              'strenght': character.strenght, 'dexterity': character.dexterity,
+                              'constitution': character.constitution, 'intelligence': character.intelligence,
+                              'wisdom': character.wisdom, 'charisma': character.charisma,
+                              'strenght_st': character.strenght_st, 'dexterity_st': character.dexterity_st,
+                              'constitution_st': character.constitution_st,
+                              'intelligence_st': character.intelligence_st, 'wisdom_st': character.wisdom_st,
+                              'charisma_st': character.charisma_st, 'acrobatics': character.acrobatics,
+                              'animal': character.animal, 'arcana': character.arcana, 'athletics': character.athelics,
+                              'deception': character.deception, 'history': character.history,
+                              'insight': character.insight, 'intimidation': character.intimidation,
+                              'investigation': character.investigation, 'medicine': character.medicine,
+                              'nature': character.nature, 'perception': character.perception,
+                              'performance': character.performance, 'persuasion': character.persuasion,
+                              'religion': character.religion, 'hand': character.hand, 'stealth': character.stealth,
+                              'survival': character.survival, 'notes': character.notes},
+                'owner': {'uid': character.owner.uid, 'username': character.owner.username}}
+    return JSONResponse(response)
+
+
+async def api_create_character(request):
+    form = await request.form()
+    if not verify_token(form['token'], form['uid']):
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+    user = locate_player_uid(form['uid'])
+    newchar = Character(isNpc=form['isNpc'], name=form['name'], race=form['race'], level=form['level'],
+                        maxhp=form['maxhp'], currenthp=form['currenthp'], proficiency=form['proficiency'],
+                        strenght=form['strenght'], dexterity=form['dexterity'], constitution=form['constitution'],
+                        intelligence=form['intelligence'], wisdom=form['wisdom'], charisma=form['charisma'],
+                        strenght_st=form['strenght_st'], dexterity_st=form['dexterity_st'],
+                        constitution_st=form['constitution_st'], intelligence_st=form['intelligence_st'],
+                        wisdom_st=form['wisdom_st'], charisma_st=form['charisma_st'], acrobatics=form['acrobatics'],
+                        animal=form['animal'], arcana=form['arcana'], athelics=form['athletics'],
+                        deception=form['deception'], history=form['history'], insight=form['insight'],
+                        investigation=form['investigation'], medicine=form['medicine'], nature=form['nature'],
+                        performance=form['performance'], persuasion=form['persuasion'], religion=form['religion'],
+                        hand=form['hand'], stealth=form['stealth'], survival=form['survival'], notes=form['notes'],
+                        owner_id=user.uid)
+    dbs.add(newchar)
+    dbs.commit()
+    return JSONResponse({'result': 'success', 'desc': 'Your character has been saved.'})
 
 
 async def test(request):
@@ -284,6 +354,7 @@ app = Starlette(debug=True, routes=[
     Route('/api/login', api_get_token, methods=['POST']),
     Route('/api/register', api_create_user, methods=['POST']),
     Route('/api/get_campaigns', api_get_campaigns, methods=['POST']),
+    Route('/api/get_characters', api_get_characters, methods=['POST']),
     Mount("/scripts", app=StaticFiles(directory='scripts'), name="scripts"),
     Mount("/static", app=StaticFiles(directory='static'), name="static")])
 

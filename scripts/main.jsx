@@ -148,10 +148,10 @@ class Login extends React.Component {
 class Dashboard extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {campaigns: [{title: null, owner: {uid: null, username: null},cid: null}
-    ]
-    }
-        ;
+        this.state = {
+            campaigns: [{title: null, owner: {uid: null, username: null}, cid: null}],
+            characters: [{cid: null, name: null, race: null, level: null}]
+        };
     }
 
     gatherCampaignData() {
@@ -172,14 +172,38 @@ class Dashboard extends React.Component {
             });
     }
 
+    gatherCharactersData() {
+        let data = new FormData();
+        data.append("token", this.props.token);
+        data.append("uid", this.props.uid);
+        fetch("/api/get_characters", {
+            "method": "POST",
+            "body": data
+        })
+            .then(res => res.json())
+            .then((result) => {
+                if (result.result === "failure") {
+                    console.log(result.desc)
+                } else if (result.result === "success") {
+                    this.setState({characters: result.characters})
+                }
+            });
+    }
+
     componentDidMount() {
         this.gatherCampaignData()
+        this.gatherCharactersData()
     }
 
     render() {
         let campaigns = this.state.campaigns.map((item) => {
             return (
-                <div key={item.cid}>{item.title}</div>
+                <div key={"camp".concat(item.cid)}>{item.title}</div>
+            )
+        })
+        let characters = this.state.characters.map((item) => {
+            return (
+                <div key={"char".concat(item.cid)}>{item.name} {item.race} {item.level}</div>
             )
         })
         return (
@@ -187,10 +211,20 @@ class Dashboard extends React.Component {
                 <br></br>
                 <div className="container">
                     <div className="jumbotron trasparent">
-                        {campaigns}
+                        <h1 className="display-3">Welcome to your dashboard,</h1>
+                        <p></p>
+                    </div>
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-md-6 white">
+                                {campaigns}
+                            </div>
+                            <div className="col-md-6 white">
+                                {characters}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
         )
     }
