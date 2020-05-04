@@ -64,11 +64,38 @@ class OpenDnD extends React.Component {
             });
     }
 
+    character_builder = () => {
+        console.log("Character_builder")
+        this.setState({
+            user: {
+                uid: this.state.user.uid,
+                token: this.state.user.token,
+                username: this.state.user.username
+            }, page: 'char_builder'
+        })
+    };
+
+    dashboard = () => {
+        console.log("Dashboard")
+        this.setState({
+            user: {
+                uid: this.state.user.uid,
+                token: this.state.user.token,
+                username: this.state.user.username
+            }, page: 'dashboard'
+        })
+    }
+
+
     render() {
         if (this.state.page === 'login') {
             return <Login loginFunc={this.validate} signupFunc={this.signup}></Login>
         } else if (this.state.page === 'dashboard') {
-            return <Dashboard token={this.state.user.token} uid={this.state.user.uid}></Dashboard>
+            return <Dashboard token={this.state.user.token} uid={this.state.user.uid}
+                              charBuildFunc={this.character_builder}></Dashboard>
+        } else if (this.state.page === 'char_builder') {
+            return <CharBuilder token={this.state.user.token} uid={this.state.user.uid}
+                                dashboardFunc={this.dashboard}></CharBuilder>
         }
         return <div>You ended up in an empty demiplane. It sucks, doesn't it?</div>
     }
@@ -214,6 +241,24 @@ class Dashboard extends React.Component {
                         <h1 className="display-3">Welcome to your dashboard,</h1>
                         <p></p>
                     </div>
+                    <div className="btn-group">
+                        <button type="button" className="btn btn-info">Actions</button>
+                        <button type="button" className="btn btn-danger dropdown-toggle dropdown-toggle-split"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span className="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <div className="dropdown-menu">
+                            <button className="dropdown-item" type="button" onClick={this.props.charBuildFunc}>Add a
+                                character
+                            </button>
+                            <a className="dropdown-item" href="#">Add a skill</a>
+                            <a className="dropdown-item" href="#">Add a class</a>
+                            <div className="dropdown-divider"></div>
+                            <a className="dropdown-item" href="#">Add a campaign</a>
+                            <div className="dropdown-divider"></div>
+                            <a className="dropdown-item" href="#">Account settings</a>
+                        </div>
+                    </div>
                     <div className="container">
                         <div className="row">
                             <div className="col-md-6 white">
@@ -228,6 +273,126 @@ class Dashboard extends React.Component {
             </div>
         )
     }
+}
+
+class CharBuilder extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            skills: [{sid: null, name: null, attribute: null, desc: null}],
+            counter: 0
+        };
+    }
+
+    gatherSkillData() {
+        let data = new FormData();
+        data.append("token", this.props.token);
+        data.append("uid", this.props.uid);
+        fetch("/api/get_skills", {
+            "method": "POST",
+            "body": data
+        })
+            .then(res => res.json())
+            .then((result) => {
+                if (result.result === "failure") {
+                    console.log(result.desc)
+                } else if (result.result === "success") {
+                    this.setState({skills: result.skills})
+                }
+            });
+    }
+
+    componentDidMount() {
+        this.gatherSkillData()
+    }
+
+    addskill = () => {
+        let skillset = this.state.skills.map((item) => {
+            return (
+                <option value={item.sid}>{item.name}, {item.attribute}</option>
+            )
+        });
+        let options = "<option value=\"volvo\">Full</option><option value=\"volvo\">Half</option><option value=\"volvo\">Expertise</option>";
+        let skills = "<select id=\"skill" + this.state.counter + "\" class=\"form-control\">skillset</select>";
+        let prof_level = "<select id=\"skill_level" + this.state.counter + "\" class=\"form-control\">"+options+"</select>"
+        let final = "<div className=\"row\" id=\"skillrow"+this.state.counter+"\"><div className=\"col-md-8\">"+skills+"</div><div className=\"col-md-4\">"+prof_level+"</div></div>";
+        $("#skill").append(final);
+        this.setState({counter: this.state.counter + 1});
+        $("#remskill").removeClass("disabled");
+    };
+
+    removeskill = () => {
+        if (this.state.counter > 0) {
+            $("#skillrow"+(this.state.counter - 1)).remove();
+            this.setState({counter: this.state.counter - 1});
+            if (this.state.counter == 0) {
+                $("remskill").addClass("disabled");
+            }
+        }
+    };
+
+    render() {
+
+        return (
+            <div className="dashboard-container">
+                <div className="container">
+                    <br></br>
+                    <div className="jumbotron trasparent">
+                        <form>
+                            <div className="row">
+                                <div className="col-md-4">
+                                    <label htmlFor="name">Character name</label>
+                                    <input type="text" className="form-control" id="name"></input>
+                                </div>
+                                <div className="col-md-2">
+                                    <label htmlFor="level">Level</label>
+                                    <input type="number" className="form-control" id="level"></input>
+                                </div>
+                                <div className="col-md-2">
+                                    <label htmlFor="align">Alignament</label>
+                                    <input type="text" className="form-control" id="align"></input>
+                                </div>
+                                <div className="col-md-4">
+                                    <label htmlFor="race">Race</label>
+                                    <input type="text" className="form-control" id="race"></input>
+                                </div>
+                            </div>
+                            <div className="row">
+                                <div className="col-md-1">
+                                    <label htmlFor="str">Strength</label>
+                                    <input type="number" className="form-control" id="str"></input>
+                                    <label htmlFor="dex">Dexterity</label>
+                                    <input type="number" className="form-control" id="dex"></input>
+                                    <label htmlFor="cos">Constitution</label>
+                                    <input type="number" className="form-control" id="cos"></input>
+                                    <label htmlFor="int">Intelligence</label>
+                                    <input type="number" className="form-control" id="int"></input>
+                                    <label htmlFor="wis">Wisdom</label>
+                                    <input type="number" className="form-control" id="wis"></input>
+                                    <label htmlFor="cha">Charisma</label>
+                                    <input type="number" className="form-control" id="cha"></input>
+                                </div>
+                                <div className="col-md-5">
+                                    <label htmlFor="skill"> List of skill proficiencies </label>
+                                    <div id="skill">
+                                        <p>
+                                            <div id="addskill" className="btn btn-success" onClick={this.addskill}> Add
+                                                a skill
+                                            </div>
+                                            <div id="remskill" className="btn btn-danger disabled"
+                                                 onClick={this.removeskill}> Remove a skill
+                                            </div>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
 }
 
 ReactDOM.render(

@@ -37,6 +37,9 @@ groupconnection = Table('groupconnection', Base.metadata,
                         Column('uid', Integer, ForeignKey('user.uid')),
                         Column('gid', Integer, ForeignKey('group.gid')))
 
+skillconnection = Table('skillconnection', Base.metadata, Column('cid', Integer, ForeignKey('character.cid')),
+                        Column('sid', Integer, ForeignKey('skill.sid')), Column('level', Integer))
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -123,6 +126,15 @@ class Message(Base):
         return "MESSAGE - {} {} {}".format(self.mid, self.group_id, self.owner_id)
 
 
+class Skill(Base):
+    __tablename__ = 'skill'
+    sid = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    attribute = Column(Integer, nullable=False)  # 1:STR, 2:DEX, 3:COS, 4:INT, 6:CHA, 7:WIS
+    desc = Column(String, nullable=True)
+    characters = relationship("Character", secondary=skillconnection, back_populates="skills")
+
+
 class Character(Base):
     __tablename__ = 'character'
     cid = Column(Integer, primary_key=True)
@@ -148,25 +160,6 @@ class Character(Base):
     intelligence_st = Column(Boolean, nullable=False)
     wisdom_st = Column(Boolean, nullable=False)
     charisma_st = Column(Boolean, nullable=False)
-    # Skills
-    acrobatics = Column(Integer, nullable=False)
-    animal = Column(Integer, nullable=False)
-    arcana = Column(Integer, nullable=False)
-    athelics = Column(Integer, nullable=False)
-    deception = Column(Integer, nullable=False)
-    history = Column(Integer, nullable=False)
-    insight = Column(Integer, nullable=False)
-    intimidation = Column(Integer, nullable=False)
-    investigation = Column(Integer, nullable=False)
-    medicine = Column(Integer, nullable=False)
-    nature = Column(Integer, nullable=False)
-    perception = Column(Integer, nullable=False)
-    performance = Column(Integer, nullable=False)
-    persuasion = Column(Integer, nullable=False)
-    religion = Column(Integer, nullable=False)
-    hand = Column(Integer, nullable=False)
-    stealth = Column(Integer, nullable=False)
-    survival = Column(Integer, nullable=False)
     # Misc
     notes = Column(String, nullable=True)
     # Connections with other tables
@@ -174,6 +167,7 @@ class Character(Base):
     owner = relationship("User", back_populates="characters")
     campaign_id = Column(Integer, ForeignKey('campaign.cid'))
     campaign = relationship("Campaign", back_populates="characters")
+    skills = relationship("Skill", secondary=skillconnection, back_populates="characters")
 
 
 log.info("Now checking db structures...")
@@ -297,26 +291,14 @@ async def api_get_character_details(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
         return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
-    character = dbs.query(Character).Join(User).filter_by(cid=form['cid']).first()
+    character = dbs.query(Character).Join(User).Join(Skill).filter_by(cid=form['cid']).first()
     response = {'result': 'success',
                 'character': {'cid': character.cid, 'isNpc': character.isNpc, 'name': character.name,
                               'race': character.race, 'level': character.level, 'maxhp': character.maxhp,
                               'currenthp': character.currenthp, 'proficiency': character.proficiency,
                               'strenght': character.strenght, 'dexterity': character.dexterity,
                               'constitution': character.constitution, 'intelligence': character.intelligence,
-                              'wisdom': character.wisdom, 'charisma': character.charisma,
-                              'strenght_st': character.strenght_st, 'dexterity_st': character.dexterity_st,
-                              'constitution_st': character.constitution_st,
-                              'intelligence_st': character.intelligence_st, 'wisdom_st': character.wisdom_st,
-                              'charisma_st': character.charisma_st, 'acrobatics': character.acrobatics,
-                              'animal': character.animal, 'arcana': character.arcana, 'athletics': character.athelics,
-                              'deception': character.deception, 'history': character.history,
-                              'insight': character.insight, 'intimidation': character.intimidation,
-                              'investigation': character.investigation, 'medicine': character.medicine,
-                              'nature': character.nature, 'perception': character.perception,
-                              'performance': character.performance, 'persuasion': character.persuasion,
-                              'religion': character.religion, 'hand': character.hand, 'stealth': character.stealth,
-                              'survival': character.survival, 'notes': character.notes},
+                              'wisdom': character.wisdom, 'charisma': character.charisma, 'notes': character.notes},
                 'owner': {'uid': character.owner.uid, 'username': character.owner.username}}
     return JSONResponse(response)
 
@@ -332,21 +314,32 @@ async def api_create_character(request):
                         intelligence=form['intelligence'], wisdom=form['wisdom'], charisma=form['charisma'],
                         strenght_st=form['strenght_st'], dexterity_st=form['dexterity_st'],
                         constitution_st=form['constitution_st'], intelligence_st=form['intelligence_st'],
-                        wisdom_st=form['wisdom_st'], charisma_st=form['charisma_st'], acrobatics=form['acrobatics'],
-                        animal=form['animal'], arcana=form['arcana'], athelics=form['athletics'],
-                        deception=form['deception'], history=form['history'], insight=form['insight'],
-                        investigation=form['investigation'], medicine=form['medicine'], nature=form['nature'],
-                        performance=form['performance'], persuasion=form['persuasion'], religion=form['religion'],
-                        hand=form['hand'], stealth=form['stealth'], survival=form['survival'], notes=form['notes'],
+                        wisdom_st=form['wisdom_st'], charisma_st=form['charisma_st'], notes=form['notes'],
                         owner_id=user.uid)
     dbs.add(newchar)
     dbs.commit()
     return JSONResponse({'result': 'success', 'desc': 'Your character has been saved.'})
 
 
+async def api_get_skills(request):
+    form = await request.form()
+    if not verify_token(form['token'], form['uid']):
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+    skills = dbs.query(Skill).all()
+    response = {'result': 'success', 'skills': [{'sid': None, 'name': None, 'attribute': None, 'desc': None}]}
+    a = 0
+    for skill in skills:
+        response['skills'][a]['sid'] = skill.sid
+        response['skills'][a]['name'] = skill.name
+        response['skills'][a]['attribute'] = skill.attribute
+        response['skills'][a]['desc'] = skill.desc
+        a += 1
+    print(response)
+    return JSONResponse(response)
+
+
 async def test(request):
     return templates.TemplateResponse('main.htm', {'request': request})
-
 
 log.info("Now creating the Rasanhal WebApp Object...")
 app = Starlette(debug=True, routes=[
@@ -355,6 +348,7 @@ app = Starlette(debug=True, routes=[
     Route('/api/register', api_create_user, methods=['POST']),
     Route('/api/get_campaigns', api_get_campaigns, methods=['POST']),
     Route('/api/get_characters', api_get_characters, methods=['POST']),
+    Route('/api/get_skills', api_get_skills, methods=['POST']),
     Mount("/scripts", app=StaticFiles(directory='scripts'), name="scripts"),
     Mount("/static", app=StaticFiles(directory='static'), name="static")])
 
