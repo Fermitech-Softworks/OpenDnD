@@ -28,17 +28,57 @@ Base = declarative_base()
 
 log = logging.getLogger(__name__)
 
-partecipant = Table('partecipant', Base.metadata,
-                    Column('uid', Integer, ForeignKey('user.uid')),
-                    Column('cid', Integer, ForeignKey('campaign.cid'))
-                    )
 
-groupconnection = Table('groupconnection', Base.metadata,
-                        Column('uid', Integer, ForeignKey('user.uid')),
-                        Column('gid', Integer, ForeignKey('group.gid')))
+class SkillAssociation(Base):
+    __tablename__ = 'skillassociation'
+    skill_id = Column(Integer, ForeignKey('skill.sid'), primary_key=True)
+    character_id = Column(Integer, ForeignKey('character.cid'), primary_key=True)
+    level = Column(Integer, nullable=False)
+    skill = relationship("Skill", back_populates="characters")
+    character = relationship("Character", back_populates="skills")
 
-skillconnection = Table('skillconnection', Base.metadata, Column('cid', Integer, ForeignKey('character.cid')),
-                        Column('sid', Integer, ForeignKey('skill.sid')), Column('level', Integer))
+
+class GroupAssociation(Base):
+    __tablename__ = 'groupassociation'
+    user_id = Column(Integer, ForeignKey('user.uid'), primary_key=True)
+    group_id = Column(Integer, ForeignKey('group.gid'), primary_key=True)
+    user = relationship("User", back_populates="groups")
+    group = relationship("Group", back_populates="users")
+
+
+class PartecipantAssociation(Base):
+    __tablename__ = 'partecipantassociation'
+    user_id = Column(Integer, ForeignKey('user.uid'), primary_key=True)
+    campaign_id = Column(Integer, ForeignKey('campaign.cid'), primary_key=True)
+    is_gm = Column(Boolean, nullable=False, default=False)
+    user = relationship("User", back_populates='partecipations')
+    campaign = relationship("Campaign", back_populates='players')
+
+
+class ClassAssociation(Base):
+    __tablename__ = 'classassociation'
+    character_id = Column(Integer, ForeignKey('character.cid'), primary_key=True)
+    class_id = Column(Integer, ForeignKey('class.cid'), primary_key=True)
+    level = Column(Integer, nullable=False)
+    character = relationship("Character", back_populates="classes")
+    Class = relationship("Class", back_populates="characters")
+
+
+class ObjectAssociation(Base):
+    __tablename__ = 'objectassociation'
+    character_id = Column(Integer, ForeignKey('character.cid'), primary_key=True)
+    object_id = Column(Integer, ForeignKey('object.oid'), primary_key=True)
+    quantity = Column(Integer, nullable=False, default=1)
+    character = relationship("Character", back_populates="inventory")
+    object = relationship("Object", back_populates="characters")
+
+
+class SpellAssociation(Base):
+    __tablename__ = 'spellassociation'
+    character_id = Column(Integer, ForeignKey('character.cid'), primary_key=True)
+    spell_id = Column(Integer, ForeignKey('spell.sid'), primary_key=True)
+    character = relationship("Character", back_populates="spells")
+    spell = relationship("Spell", back_populates="characters")
 
 
 class User(Base):
@@ -47,10 +87,9 @@ class User(Base):
     email = Column(String, nullable=False)
     password = Column(LargeBinary, nullable=False)
     username = Column(String, nullable=False)
-    owned_campaigns = relationship("Campaign", back_populates="owner")
-    partecipations = relationship("Campaign", secondary=partecipant, back_populates='players')
+    partecipations = relationship("PartecipantAssociation", back_populates='user')
     characters = relationship("Character", back_populates="owner")
-    groups = relationship("Group", secondary=groupconnection, back_populates='users')
+    groups = relationship("GroupAssociation", back_populates='user')
     messages = relationship("Message", back_populates="owner")
     tokens = relationship("Token", back_populates="owner")
 
@@ -76,36 +115,23 @@ class Campaign(Base):
     __tablename__ = 'campaign'
     cid = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
-    owner_id = Column(Integer, ForeignKey('user.uid'))
-    owner = relationship("User", back_populates="owned_campaigns")
-    players = relationship("User", secondary=partecipant, back_populates='partecipations')
-    chats = relationship("Chat", back_populates="campaign")
+    players = relationship("PartecipationAssociation", back_populates='campaign')
+    groups = relationship("Group", back_populates="campaigns")
     characters = relationship("Character", back_populates="campaign")
 
     def __repr__(self):
-        return "CAMPAIGN - {} {} {}".format(self.cid, self.title, self.owner_id)
-
-
-class Chat(Base):
-    __tablename__ = 'chat'
-    cid = Column(Integer, primary_key=True)
-    campaign_id = Column(Integer, ForeignKey('campaign.cid'))
-    campaign = relationship("Campaign", back_populates="chats")
-    groups = relationship("Group", back_populates="chat")
-
-    def __repr__(self):
-        return "CHAT - {} {}".format(self.cid, self.campaign_id)
+        return "CAMPAIGN - {} {}".format(self.cid, self.title)
 
 
 class Group(Base):
     __tablename__ = 'group'
     gid = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    chat_id = Column(Integer, ForeignKey('chat.cid'))
-    chat = relationship("Chat", back_populates="groups")
+    campaign_id = Column(Integer, ForeignKey('campaign.cid'))
+    campaigns = relationship("Campaign", back_populates="groups")
     active = Column(Boolean, nullable=False)
     isolated = Column(Boolean, nullable=False)
-    users = relationship("User", secondary=groupconnection, back_populates='groups')
+    users = relationship("GroupAssociation", back_populates='group')
     messages = relationship("Message", back_populates="group")
 
     def __repr__(self):
@@ -132,7 +158,7 @@ class Skill(Base):
     name = Column(String, nullable=False)
     attribute = Column(Integer, nullable=False)  # 1:STR, 2:DEX, 3:COS, 4:INT, 6:CHA, 7:WIS
     desc = Column(String, nullable=True)
-    characters = relationship("Character", secondary=skillconnection, back_populates="skills")
+    characters = relationship("SkillAssociation", back_populates="skill")
 
 
 class Character(Base):
@@ -141,7 +167,8 @@ class Character(Base):
     isNpc = Column(Boolean, nullable=False)
     # Basic information
     name = Column(String, nullable=False)
-    race = Column(String, nullable=False)
+    race_id = Column(Integer, ForeignKey('race.rid'))
+    race = relationship("Race", back_populates="characters")
     level = Column(Integer, nullable=False)
     maxhp = Column(Integer, nullable=False)
     currenthp = Column(Integer, nullable=False)
@@ -167,7 +194,45 @@ class Character(Base):
     owner = relationship("User", back_populates="characters")
     campaign_id = Column(Integer, ForeignKey('campaign.cid'))
     campaign = relationship("Campaign", back_populates="characters")
-    skills = relationship("Skill", secondary=skillconnection, back_populates="characters")
+    skills = relationship("SkillAssociation", back_populates="character")
+    inventory = relationship("ObjectAssociation", back_populates="character")
+    classes = relationship("ClassAssociation", back_populates="character")
+    spells = relationship("SpellAssociation", back_populates="character")
+
+
+class Class(Base):
+    __tablename__ = 'class'
+    cid = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    desc = Column(String, nullable=False)
+    characters = relationship("ClassAssociation", back_populates='Class')
+
+
+class Object(Base):
+    __tablename__ = 'object'
+    oid = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    cost = Column(String)
+    desc = Column(String, nullable=False)
+    characters = relationship("InventoryAssociation", back_populates='object')
+
+
+class Race(Base):
+    __tablename__ = 'race'
+    rid = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    desc = Column(String, nullable=False)
+    characters = relationship("Character", back_populates="race")
+
+
+class Spell(Base):
+    __tablename__ = 'spell'
+    sid = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    school = Column(String, nullable=False)
+    comp = Column(String, nullable=False)
+    die = Column(String)
+    characters = relationship("SpellAssociation", back_populates='spell')
 
 
 log.info("Now checking db structures...")
@@ -269,6 +334,16 @@ async def api_get_campaigns(request):
     return JSONResponse(response)
 
 
+async def api_create_campaign(request):
+    form = await request.form()
+    if not verify_token(form['token'], form['uid']):
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+    newcampaign = Campaign(title=form['title'], owner_id=form['uid'])
+    dbs.add(newcampaign)
+    dbs.commit()
+    return JSONResponse({'result': 'success'})
+
+
 async def api_get_characters(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
@@ -292,13 +367,19 @@ async def api_get_character_details(request):
     if not verify_token(form['token'], form['uid']):
         return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
     character = dbs.query(Character).Join(User).Join(Skill).filter_by(cid=form['cid']).first()
+    skills = []
+    for skill in character.skills:
+        skills[skill.sid]['name'] = skill.name
+        skills[skill.sid]['attrib'] = skill.attribute
+        skills[skill.sid]['desc'] = skill.desc
     response = {'result': 'success',
                 'character': {'cid': character.cid, 'isNpc': character.isNpc, 'name': character.name,
                               'race': character.race, 'level': character.level, 'maxhp': character.maxhp,
                               'currenthp': character.currenthp, 'proficiency': character.proficiency,
                               'strenght': character.strenght, 'dexterity': character.dexterity,
                               'constitution': character.constitution, 'intelligence': character.intelligence,
-                              'wisdom': character.wisdom, 'charisma': character.charisma, 'notes': character.notes},
+                              'wisdom': character.wisdom, 'charisma': character.charisma, 'notes': character.notes,
+                              'skills': skills},
                 'owner': {'uid': character.owner.uid, 'username': character.owner.username}}
     return JSONResponse(response)
 
@@ -317,6 +398,8 @@ async def api_create_character(request):
                         wisdom_st=form['wisdom_st'], charisma_st=form['charisma_st'], notes=form['notes'],
                         owner_id=user.uid)
     dbs.add(newchar)
+    for skill in form['skills']:
+        pass
     dbs.commit()
     return JSONResponse({'result': 'success', 'desc': 'Your character has been saved.'})
 
@@ -334,12 +417,12 @@ async def api_get_skills(request):
         response['skills'][a]['attribute'] = skill.attribute
         response['skills'][a]['desc'] = skill.desc
         a += 1
-    print(response)
     return JSONResponse(response)
 
 
 async def test(request):
     return templates.TemplateResponse('main.htm', {'request': request})
+
 
 log.info("Now creating the Rasanhal WebApp Object...")
 app = Starlette(debug=True, routes=[
