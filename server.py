@@ -115,7 +115,7 @@ class Campaign(Base):
     __tablename__ = 'campaign'
     cid = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
-    players = relationship("PartecipationAssociation", back_populates='campaign')
+    players = relationship("PartecipantAssociation", back_populates='campaign')
     groups = relationship("Group", back_populates="campaigns")
     characters = relationship("Character", back_populates="campaign")
 
@@ -214,7 +214,7 @@ class Object(Base):
     name = Column(String, nullable=False, unique=True)
     cost = Column(String)
     desc = Column(String, nullable=False)
-    characters = relationship("InventoryAssociation", back_populates='object')
+    characters = relationship("ObjectAssociation", back_populates='object')
 
 
 class Race(Base):
@@ -284,6 +284,10 @@ def check_auth(usertoken):
     return uid
 
 
+def create_header(data):
+    return JSONResponse(data, headers={"Access-Control-Allow-Origin": "*"})
+
+
 async def api_get_token(request):
     form = await request.form()
     if login(form['email'], form['password']):
@@ -298,9 +302,9 @@ async def api_get_token(request):
             token = Token(user.email)
             dbs.add(token)
             dbs.commit()
-        return JSONResponse({'result': 'success', 'token': token.token, 'username': user.username, 'uid': user.uid})
+        return JSONResponse({'result': 'success', 'token': token.token, 'username': user.username, 'uid': user.uid}, headers={"Access-Control-Allow-Origin": "*"})
     else:
-        return JSONResponse({'result': 'failure', 'desc': 'Invalid username or password'})
+        return JSONResponse({'result': 'failure', 'desc': 'Invalid username or password'}, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_create_user(request):
@@ -312,14 +316,14 @@ async def api_create_user(request):
         dbs.add(newuser)
         dbs.commit()
     except IntegrityError:
-        return JSONResponse({'result': 'failure', 'desc': 'User already exists.'})
-    return JSONResponse({'result': 'success'})
+        return JSONResponse({'result': 'failure', 'desc': 'User already exists.'}, headers={"Access-Control-Allow-Origin": "*"})
+    return JSONResponse({'result': 'success'}, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_get_campaigns(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
-        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'}, headers={"Access-Control-Allow-Origin": "*"})
     campaigns = dbs.query(Campaign).join(User).filter_by(uid=form['uid']).all()
     response = {'result': 'success',
                 'campaigns': [{'title': None, 'owner': {'uid': None, 'username': None}, 'cid': None}]}
@@ -331,23 +335,23 @@ async def api_get_campaigns(request):
         response['campaigns'][a]['owner']['username'] = owner.username
         response['campaigns'][a]['cid'] = campaign.cid
         a += 1
-    return JSONResponse(response)
+    return JSONResponse(response, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_create_campaign(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
         return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
-    newcampaign = Campaign(title=form['title'], owner_id=form['uid'])
+    newcampaign = Campaign(title=form['title'])
     dbs.add(newcampaign)
     dbs.commit()
-    return JSONResponse({'result': 'success'})
+    return JSONResponse({'result': 'success'}, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_get_characters(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
-        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'}, headers={"Access-Control-Allow-Origin": "*"})
     characters = dbs.query(Character).join(User).filter_by(uid=form['uid']).all()
     print(len(characters))
     response = {'result': 'success', 'characters': [{'cid': None, 'name': None, 'race': None, 'level': None}]}
@@ -359,14 +363,15 @@ async def api_get_characters(request):
         response['characters'][a]['level'] = character.level
         a += 1
     print(response)
-    return JSONResponse(response)
+    return JSONResponse(response, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_get_character_details(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
-        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
-    character = dbs.query(Character).Join(User).Join(Skill).filter_by(cid=form['cid']).first()
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'}, headers={"Access-Control-Allow-Origin": "*"})
+    character = dbs.query(Character).Join(User).Join(Skill).Join(Race).Join(Object).join(Spell).join(Class).filter_by(
+        cid=form['cid']).first()
     skills = []
     for skill in character.skills:
         skills[skill.sid]['name'] = skill.name
@@ -381,15 +386,16 @@ async def api_get_character_details(request):
                               'wisdom': character.wisdom, 'charisma': character.charisma, 'notes': character.notes,
                               'skills': skills},
                 'owner': {'uid': character.owner.uid, 'username': character.owner.username}}
-    return JSONResponse(response)
+    return JSONResponse(response, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_create_character(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
-        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'}, headers={"Access-Control-Allow-Origin": "*"})
     user = locate_player_uid(form['uid'])
-    newchar = Character(isNpc=form['isNpc'], name=form['name'], race=form['race'], level=form['level'],
+    race = dbs.query(Race).filter_by(name=form['race']).first
+    newchar = Character(isNpc=form['isNpc'], name=form['name'], level=form['level'], race_id=race.id,
                         maxhp=form['maxhp'], currenthp=form['currenthp'], proficiency=form['proficiency'],
                         strenght=form['strenght'], dexterity=form['dexterity'], constitution=form['constitution'],
                         intelligence=form['intelligence'], wisdom=form['wisdom'], charisma=form['charisma'],
@@ -399,15 +405,25 @@ async def api_create_character(request):
                         owner_id=user.uid)
     dbs.add(newchar)
     for skill in form['skills']:
-        pass
+        newconn = SkillAssociation(skill_id=skill['sid'], character_id=newchar.cid, level=skill['level'])
+        dbs.add(newconn)
+    for cle in form['classes']:
+        newconn = ClassAssociation(class_id=cle['cid'], character_id=newchar.cid, level=cle['level'])
+        dbs.add(newconn)
+    for spell in form['spells']:
+        newconn = SpellAssociation(spell_id=spell['sid'], character_id=newchar.cid)
+        dbs.add(newconn)
+    for obj in form['inventory']:
+        newconn = ObjectAssociation(object_id=obj['oid'], character_id=newchar.cid, quantity=obj['qty'])
+        dbs.add(newconn)
     dbs.commit()
-    return JSONResponse({'result': 'success', 'desc': 'Your character has been saved.'})
+    return JSONResponse({'result': 'success', 'desc': 'Your character has been saved.'}, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def api_get_skills(request):
     form = await request.form()
     if not verify_token(form['token'], form['uid']):
-        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'})
+        return JSONResponse({'result': 'failure', 'desc': 'You may be not logged in or your token has expired.'}, headers={"Access-Control-Allow-Origin": "*"})
     skills = dbs.query(Skill).all()
     response = {'result': 'success', 'skills': [{'sid': None, 'name': None, 'attribute': None, 'desc': None}]}
     a = 0
@@ -417,11 +433,11 @@ async def api_get_skills(request):
         response['skills'][a]['attribute'] = skill.attribute
         response['skills'][a]['desc'] = skill.desc
         a += 1
-    return JSONResponse(response)
+    return JSONResponse(response, headers={"Access-Control-Allow-Origin": "*"})
 
 
 async def test(request):
-    return templates.TemplateResponse('main.htm', {'request': request})
+    return JSONResponse({'result': 'success', 'desc': 'sos.'}, headers={"Access-Control-Allow-Origin": "*"})
 
 
 log.info("Now creating the Rasanhal WebApp Object...")
@@ -431,8 +447,8 @@ app = Starlette(debug=True, routes=[
     Route('/api/register', api_create_user, methods=['POST']),
     Route('/api/get_campaigns', api_get_campaigns, methods=['POST']),
     Route('/api/get_characters', api_get_characters, methods=['POST']),
-    Route('/api/get_skills', api_get_skills, methods=['POST']),
-    Mount("/scripts", app=StaticFiles(directory='scripts'), name="scripts"),
-    Mount("/static", app=StaticFiles(directory='static'), name="static")])
+    Route('/api/get_characters_details', api_get_characters, methods=['POST']),
+    Route('/api/create_character', api_get_characters, methods=['POST']),
+    Route('/api/get_skills', api_get_skills, methods=['POST'])])
 
 log.info("Rasanahal WebApp ready.")
