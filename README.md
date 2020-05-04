@@ -1,2 +1,2 @@
-# OpenDnD
-An open source project to improve the DnD play by chat experience.
+# OpenDnD-backend
+This is the backend used to provide the OpenDnD service. Users are encouraged to look into the source code and develop additional or improved clients.  
