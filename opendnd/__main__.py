@@ -1,4 +1,3 @@
-import binascii
 import datetime
 
 import bcrypt
