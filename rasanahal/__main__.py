@@ -5,12 +5,9 @@ from sqlalchemy.orm import sessionmaker, relationship
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse, RedirectResponse, HTMLResponse
-from starlette.templating import Jinja2Templates
 from starlette.routing import Route
 from starlette.config import Config
 from starlette.routing import Route
-from starlette.routing import Mount
-from starlette.staticfiles import StaticFiles
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, LargeBinary, Boolean, \
     ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
@@ -21,7 +18,6 @@ import secrets
 
 config = Config('.env')
 engine = create_engine('sqlite:///database.sqlite')
-templates = Jinja2Templates(directory='templates')
 meta = MetaData()
 Base = declarative_base()
 
