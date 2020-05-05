@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "opendnd"
+name = "rasanahal"
 version = "0.1.0"
 description = ""
 authors = ["Lorenzo Balugani <lorenzo.balugani@gmail.com>"]
