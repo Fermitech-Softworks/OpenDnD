@@ -33,3 +33,12 @@ class Message:
     @declared_attr
     def owner(self):
         return relationship("User", backref="messages")
+
+    def json(self, minimal):
+        return {
+            'id': self.mid,
+            'text': self.text,
+            'time': self.time,
+            'group': [self.owner.uid if minimal else self.owner.json()],
+            'user': [self.group.group_id if minimal else self.group.json(True)]
+        }

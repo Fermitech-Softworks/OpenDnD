@@ -25,3 +25,12 @@ class Object:
     @declared_attr
     def characters(self):
         return relationship("ObjectAssociation", back_populates='object')
+
+    def json(self, minimal):
+        return {
+            'id': self.oid,
+            'name': self.name,
+            'cost': self.cost,
+            'desc': self.desc,
+            'characters': [char.character.cid if minimal else char.character.json(True) for char in self.characters]
+        }

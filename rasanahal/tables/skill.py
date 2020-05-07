@@ -25,3 +25,12 @@ class Skill:
     @declared_attr
     def characters(self):
         return relationship("SkillAssociation", back_populates="skill")
+
+    def json(self, minimal):
+        return {
+            'id': self.sid,
+            'name': self.name,
+            'attribute': self.attribute,
+            'desc': self.desc,
+            'characters': [char.character.cid if minimal else char.character.json(True) for char in self.characters]
+        }

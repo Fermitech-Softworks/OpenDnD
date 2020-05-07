@@ -20,7 +20,7 @@ class Campaign:
 
     @declared_attr
     def groups(self):
-        return relationship("Group", back_populates="campaigns")
+        return relationship("Group", back_populates="campaign")
 
     @declared_attr
     def characters(self):
@@ -28,3 +28,12 @@ class Campaign:
 
     def __repr__(self):
         return "CAMPAIGN - {} {}".format(self.cid, self.title)
+
+    def json(self, minimal):
+        return {
+            'id': self.cid,
+            'title': self.title,
+            'players': [player.json() for player in self.players],
+            'characters': [character.cid if minimal else character.minJ() for character in self.characters],
+            'groups': [group.gid if minimal else group.json(True) for group in self.groups]
+        }

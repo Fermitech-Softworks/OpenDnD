@@ -19,7 +19,7 @@ class Group:
         return Column(Integer, ForeignKey('campaign.cid'))
 
     @declared_attr
-    def campaigns(self):
+    def campaign(self):
         return relationship("Campaign", back_populates="groups")
 
     @declared_attr
@@ -37,3 +37,13 @@ class Group:
     @declared_attr
     def messages(self):
         return relationship("Message", back_populates="group")
+
+    def json(self, minimal):
+        return {
+            'id': self.gid,
+            'name': self.name,
+            'active': self.active,
+            'isolated': self.isolated,
+            'users': [user.user.json() for user in self.users],
+            'campaign': [self.campaign.cid if minimal else self.campaign.json(True)]
+        }

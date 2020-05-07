@@ -125,3 +125,39 @@ class Character:
     @declared_attr
     def spells(self):
         return relationship("SpellAssociation", back_populates="character")
+
+    def json(self, minimal):
+        return {
+            'id': self.cid,
+            'is_npc': self.is_npc,
+            'name': self.name,
+            'race': self.race.json(),
+            'level': self.level,
+            'maxhp': self.maxhp,
+            'currenthp': self.currenthp,
+            'proficiency': self.proficiency,
+            'attributes': {
+                'str': self.strength,
+                'dex': self.dexterity,
+                'con': self.constitution,
+                'int': self.intelligence,
+                'wis': self.wisdom,
+                'cha': self.charisma
+            },
+            'ts': {
+                'str': self.strength_st,
+                'dex': self.dexterity_st,
+                'con': self.constitution_st,
+                'int': self.intelligence_st,
+                'wis': self.wisdom_st,
+                'cha': self.charisma_st
+            },
+            'notes': self.notes,
+            'owner': self.owner.uid if minimal else self.owner.json(),
+            'campaigns': [campaign.cid if minimal else campaign.json(True) for campaign in self.campaign],
+            'classes': [{'id': cla.class_.cid, 'level': cla} if minimal else cla.class_.json(True) for cla in self.classes],
+            'inventory': [{'id': obj.object_.oid, 'qty': obj.quantity} if minimal else obj.object_.json(True) for obj in self.inventory],
+            'spells': [{'id': s.spell.sid} if minimal else s.spell.json(True) for s in self.spells],
+            'skills': [{'id': s.skill.id, 'level': s.level} if minimal else s.skill.json(True) for s in self.skills]
+
+        }

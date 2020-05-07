@@ -23,5 +23,5 @@ class ObjectAssociation:
         return relationship("Character", back_populates="inventory")
 
     @declared_attr
-    def object(self):
+    def object_(self):
         return relationship("Object", back_populates="characters")

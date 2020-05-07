@@ -21,3 +21,11 @@ class Race:
     @declared_attr
     def characters(self):
         return relationship("Character", back_populates="race")
+
+    def json(self, minimal):
+        return {
+            'id': self.rid,
+            'name': self.name,
+            'desc': self.desc,
+            'characters': [char.character.cid if minimal else char.character.json(True) for char in self.characters]
+        }
