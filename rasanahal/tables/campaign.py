@@ -34,6 +34,6 @@ class Campaign:
             'id': self.cid,
             'title': self.title,
             'players': [player.json() for player in self.players],
-            'characters': [character.cid if minimal else character.minJ() for character in self.characters],
+            'characters': [character.cid if minimal else character.json(True) for character in self.characters],
             'groups': [group.gid if minimal else group.json(True) for group in self.groups]
         }
