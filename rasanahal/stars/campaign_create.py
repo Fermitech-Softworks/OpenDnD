@@ -33,4 +33,4 @@ class CampaignCreateStar(rca.ApiStar):
         data.session.add(new_camp)
         data.session.add(dm_assoc)
         data.session.commit()
-        return {"campaign": new_camp.json()}
+        return {"campaign": new_camp.json(True)}
