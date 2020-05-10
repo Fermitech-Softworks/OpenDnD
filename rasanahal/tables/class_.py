@@ -20,11 +20,11 @@ class Class:
 
     @declared_attr
     def characters(self):
-        return relationship("ClassAssociation", back_populates='Class')
+        return relationship("ClassAssociation", back_populates='class_')
 
     def json(self, minimal):
         return {
-            'id': self.oid,
+            'id': self.cid,
             'name': self.name,
             'desc': self.desc,
             'characters': [char.character.cid if minimal else char.character.json(True) for char in self.characters]

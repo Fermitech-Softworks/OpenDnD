@@ -5,6 +5,7 @@ from .campaign_add_user import CampaignAddUserStar
 from .campaign_create import CampaignCreateStar
 from .campaign_get import CampaignGetStar
 from .user_get import UserGetStar
+from .user_create import UserCreateStar
 
 # Enter the PageStars of your Pack here!
 available_page_stars = [
@@ -13,7 +14,8 @@ available_page_stars = [
     CampaignGetStar,
     CampaignCreateStar,
     CampaignAddUserStar,
-    UserGetStar
+    UserGetStar,
+    UserCreateStar
 ]
 
 

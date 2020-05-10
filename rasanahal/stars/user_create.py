@@ -15,13 +15,17 @@ class UserCreateStar(rca.ApiStar):
 
     description = ""
 
-    methods = ["GET"]
+    methods = ["POST"]
 
     path = "/api/user/create/v1"
 
     requires_auth = False
 
-    parameters = {}
+    parameters = {
+        "username": "The desired username.",
+        "email": "The user's email.",
+        "password": "The desired password."
+    }
 
     tags = ["user"]
 

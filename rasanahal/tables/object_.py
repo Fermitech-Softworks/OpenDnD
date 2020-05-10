@@ -24,7 +24,7 @@ class Object:
 
     @declared_attr
     def characters(self):
-        return relationship("ObjectAssociation", back_populates='object')
+        return relationship("ObjectAssociation", back_populates='object_')
 
     def json(self, minimal):
         return {
