@@ -9,7 +9,7 @@ class UserGetCampaignsStar(rca.ApiStar):
     summary = "Method that returns the campaigns data."
     description = """Given a user identifier, it returns the json string that represents the campaigns in which
      he partecipates."""
-    methods = ["POST"]
+    methods = ["GET"]
     path = "/api/user/get_campaigns"
     requires_auth = True
     tags = ["user"]

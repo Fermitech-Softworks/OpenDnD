@@ -8,7 +8,7 @@ from rasanahal.tables import Character
 class UserGetCharStar(rca.ApiStar):
     summary = "Method that returns all the characters of a certain user."
     description = """This method returns all data concerning a user's character."""
-    methods = ["POST"]
+    methods = ["GET"]
     path = "/api/user/get_characters"
     requires_auth = True
     tags = ["user"]

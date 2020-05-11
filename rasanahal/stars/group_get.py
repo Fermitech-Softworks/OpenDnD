@@ -8,7 +8,7 @@ from rasanahal.tables import Group, GroupAssociation
 class GroupGetStar(rca.ApiStar):
     summary = "Method that returns all the users inside a Group."
     description = """Given the id of the group, it returns the details of the group itself."""
-    methods = ["POST"]
+    methods = ["GET"]
     path = "/api/group/get"
     requires_auth = True
     parameters = {
@@ -23,4 +23,4 @@ class GroupGetStar(rca.ApiStar):
         if data.session.query(AssT).filter_by(group_id=data['gid'], user_id=user.uid).first() is None:
             raise Exception("You are not in this campaign.")
         group = data.session.query(GroT).filter_by(gid=data['gid']).first()
-        return {"group": group.json()}
+        return {"group": group.json(False)}
