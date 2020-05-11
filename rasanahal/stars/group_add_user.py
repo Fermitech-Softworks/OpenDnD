@@ -15,7 +15,7 @@ class GroupAddUserStar(rca.ApiStar):
         "gid": "The group id",
         "uid": "The user id"
     }
-    tags = ["group"]
+    tags = ["group", "user"]
 
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()

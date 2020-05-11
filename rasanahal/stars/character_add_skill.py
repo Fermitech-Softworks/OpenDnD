@@ -17,7 +17,7 @@ class CharacterAddSkillStar(rca.ApiStar):
         "sid": "The skill id.",
         "level": "The proficiency level."
     }
-    tags = ["character"]
+    tags = ["character", "skill"]
 
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()

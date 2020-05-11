@@ -16,5 +16,5 @@ class UserGetCharStar(rca.ApiStar):
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()
         CharT = self.alchemy.get(Character)
-        chars = data.session.query(CharT).filter_by(user_id=user.uid).all()
+        chars = data.session.query(CharT).filter_by(user_id=user.uid).order_by(CharT.name).all()
         return {"character": c.json(True) for c in chars}

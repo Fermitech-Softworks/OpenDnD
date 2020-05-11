@@ -17,7 +17,7 @@ class CharacterAddClassStar(rca.ApiStar):
         "clid": "The class id.",
         "level": "The level."
     }
-    tags = ["character"]
+    tags = ["character", "class"]
 
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()

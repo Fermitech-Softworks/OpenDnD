@@ -19,7 +19,8 @@ class UserGetCampaignsStar(rca.ApiStar):
         CampaignT = self.alchemy.get(Campaign)
         ParT = self.alchemy.get(PartecipantAssociation)
         if "admin" not in user.roles:
-            campaigns = data.session.query(CampaignT).Join(ParT).filter_by(ParT.user_id == user.uid).all()
+            campaigns = data.session.query(CampaignT).Join(ParT).filter_by(ParT.user_id == user.uid).order_by(
+                CampaignT.name).all()
         else:
             campaigns = data.session.query(CampaignT).all()
         return {"campaign": c.json(True) for c in campaigns}

@@ -17,7 +17,7 @@ class CharacterAddObjectStar(rca.ApiStar):
         "oid": "The object id.",
         "quantity": "The quantity of a certain object."
     }
-    tags = ["character"]
+    tags = ["character", "object"]
 
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()

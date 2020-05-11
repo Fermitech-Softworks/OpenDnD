@@ -21,6 +21,6 @@ class CharacterGetDetailsStar(rca.ApiStar):
         user = await data.user()
         CharT = self.alchemy.get(Character)
         char = data.session.query(CharT).filter_by(cid=data['cid']).first()
-        if "admin" not in user.roles and char.owner_id!=user.uid:
+        if "admin" not in user.roles and char.owner_id != user.uid:
             raise Exception("You don't belong to this roleplay demiplane.")
-        return {"campaign": char.json(False)}
+        return {"character": char.json(False)}

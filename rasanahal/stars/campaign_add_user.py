@@ -17,7 +17,7 @@ class CampaignAddUserStar(rca.ApiStar):
         "cid": "The campaign id",
         "as_gm": "True if the new player must be added as GM."
     }
-    tags = ["user"]
+    tags = ["user", "campaign"]
 
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()

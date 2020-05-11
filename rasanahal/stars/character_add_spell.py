@@ -15,7 +15,7 @@ class CharacterAddSpellStar(rca.ApiStar):
         "cid": "The character id.",
         "sid": "The spell id.",
     }
-    tags = ["character"]
+    tags = ["character", "spell"]
 
     async def api(self, data: rca.ApiData) -> ru.JSON:
         user = await data.user()
