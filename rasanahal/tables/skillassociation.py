@@ -15,7 +15,7 @@ class SkillAssociation:
         return Column(Integer, ForeignKey('character.cid'), primary_key=True)
 
     @declared_attr
-    def level(self):
+    def level(self):  # 0=half, 1= full, 2= expertise
         return Column(Integer, nullable=False)
 
     @declared_attr

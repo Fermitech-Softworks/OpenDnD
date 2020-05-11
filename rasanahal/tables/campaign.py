@@ -37,3 +37,8 @@ class Campaign:
             'characters': [character.cid if minimal else character.json(True) for character in self.characters],
             'groups': [group.gid if minimal else group.json(True) for group in self.groups]
         }
+
+    def locate_gm(self):
+        for connection in self.players:
+            if connection.is_gm:
+                return connection.user_id

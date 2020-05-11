@@ -11,7 +11,7 @@ class CampaignCreateStar(rca.ApiStar):
     the association with the dungeon master (the user that creates the campaign).
     """
     methods = ["POST"]
-    path = "/api/campaigns/create"
+    path = "/api/campaign/create"
     requires_auth = True
     parameters = {
         "title": "The title of the campaign"
