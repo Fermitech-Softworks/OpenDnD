@@ -32,11 +32,3 @@ python -m royalnet -c config.toml
 ```
 
 The webserver should be available at http://127.0.0.1:44445; documentation for the enabled API methods should be at http://127.0.0.1:44445/docs.
-
-## Note per balu
-
-Leggi i file sorgente in quest'ordine:
-
-- example_echo
-- example_user_random
-- user_create
